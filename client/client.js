@@ -1,6 +1,4 @@
 var util = require('util');
-var StringDecoder = require('string_decoder').StringDecoder;
-var decoder = new StringDecoder('utf8');
 
 //Mongo DB setup
 var dburl = 'localhost/mongoTest';
@@ -21,14 +19,16 @@ var mqtt = require('mqtt')
 setClient = mqtt.createClient(1883, 'localhost');
 setClient.subscribe('/set');
  
+//Set up a stock model object
 function stock(item, qty) {
   this.item = item;
   this.qty = qty;
 }
 
 setClient.on('message', function(topic, message) {
-  var msgStr = decoder.write(message);
-  var splitMsg = msgStr.split(",");  
+  //var msgStr = decoder.write(message);
+  //var splitMsg = msgStr.split(",");  
+  var splitMsg = message.toString().split(",");
   var storeItem = new stock(splitMsg[0], splitMsg[1]);
   
   //console.log(msgStr);
@@ -44,10 +44,11 @@ getClient = mqtt.createClient(1883, 'localhost');
 getClient.subscribe('/get');
 
 getClient.on('message', function(topic, message) {
-  var msgStr = decoder.write(message);
+  //var msgStr = decoder.write(message);
   //db.testCollection.find( { item : 'pen' }, function(err, found) {
   //var query = { item : 'pen' };
-  var query = message.toString();
+  //var query = message.toString();
+  var query = JSON.parse(message);
   db.testCollection.find(query, function(err, found) {
     if( err || !found ) console.log("Msg " + query + " not found.");
     else found.forEach( function(foundItem) { 
